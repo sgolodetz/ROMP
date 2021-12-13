@@ -1,9 +1,9 @@
 from ..base import *
-from utils.cam_utils import convert_cam_to_3d_trans
-from utils.demo_utils import save_meshes, get_video_bn, Time_counter
+from romp.lib.utils.cam_utils import convert_cam_to_3d_trans
+from romp.lib.utils.demo_utils import save_meshes, get_video_bn, Time_counter
 import platform
-from utils.util import save_result_dict_tonpz
-from dataset.internet import img_preprocess
+from romp.lib.utils.util import save_result_dict_tonpz
+from romp.lib.dataset.internet import img_preprocess
 from torch.cuda.amp import autocast
 
 class Predictor(Base):
@@ -33,7 +33,7 @@ class Predictor(Base):
 
     def _prepare_modules_(self):
         self.model.eval()
-        self.demo_dir = os.path.join(config.project_dir, 'demo')
+        self.demo_dir = os.path.join(romp.lib.config.project_dir, 'demo')
 
     def __initialize__(self):
         if self.save_visualization_on_img:
@@ -56,8 +56,8 @@ class Predictor(Base):
         smpl_shape_results = outputs['params']['betas'].detach().cpu().numpy().astype(np.float16)
         joints_54 = outputs['j3d'].detach().cpu().numpy().astype(np.float16)
         kp3d_smpl24_results = outputs['joints_smpl24'].detach().cpu().numpy().astype(np.float16)
-        kp3d_spin24_results = joints_54[:,constants.joint_mapping(constants.SMPL_ALL_54, constants.SPIN_24)]
-        kp3d_op25_results = joints_54[:,constants.joint_mapping(constants.SMPL_ALL_54, constants.OpenPose_25)]
+        kp3d_spin24_results = joints_54[:,romp.lib.constants.joint_mapping(romp.lib.constants.SMPL_ALL_54, romp.lib.constants.SPIN_24)]
+        kp3d_op25_results = joints_54[:,romp.lib.constants.joint_mapping(romp.lib.constants.SMPL_ALL_54, romp.lib.constants.OpenPose_25)]
         verts_results = outputs['verts'].detach().cpu().numpy().astype(np.float16)
         pj2d_results = outputs['pj2d'].detach().cpu().numpy().astype(np.float16)
         pj2d_org_results = outputs['pj2d_org'].detach().cpu().numpy().astype(np.float16)

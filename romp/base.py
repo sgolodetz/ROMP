@@ -10,25 +10,25 @@ import torch.nn as nn
 from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data import Dataset, DataLoader, ConcatDataset
 
-import config
-import constants
-from config import args, parse_args, ConfigContext
-from models import build_model,build_teacher_model
-from models.balanced_dataparallel import DataParallel
-from utils import *
-from utils.projection import vertices_kp3d_projection
-from utils.train_utils import justify_detection_state
-from evaluation import compute_error_verts, compute_similarity_transform, compute_similarity_transform_torch, \
+import romp.lib.config
+import romp.lib.constants
+from romp.lib.config import args, parse_args, ConfigContext
+from romp.lib.models import build_model,build_teacher_model
+from romp.lib.models.balanced_dataparallel import DataParallel
+from romp.lib.utils import *
+from romp.lib.utils.projection import vertices_kp3d_projection
+from romp.lib.utils.train_utils import justify_detection_state
+from romp.lib.evaluation import compute_error_verts, compute_similarity_transform, compute_similarity_transform_torch, \
                     batch_compute_similarity_transform_torch, compute_mpjpe, \
                     determ_worst_best, reorganize_vis_info
-from dataset.mixed_dataset import MixedDataset,SingleDataset
-from visualization.visualization import Visualizer
+from romp.lib.dataset.mixed_dataset import MixedDataset,SingleDataset
+from romp.lib.visualization.visualization import Visualizer
 if args().model_precision=='fp16':
     from torch.cuda.amp import autocast, GradScaler
 
 class Base(object):
     def __init__(self, args_set=None):
-        self.project_dir = config.project_dir
+        self.project_dir = romp.lib.config.project_dir
         hparams_dict = self.load_config_dict(vars(args() if args_set is None else args_set))
         self._init_log(hparams_dict)
         self._init_params()
@@ -79,11 +79,11 @@ class Base(object):
         self.summary_writer = SummaryWriter(self.log_path)
         save_yaml(hparams_dict, self.log_file.replace('.log', '.yml'))
 
-        self.result_img_dir = os.path.join(config.root_dir, 'result_images', '{}_on_gpu{}_val'.format(self.tab, self.GPUS))
+        self.result_img_dir = os.path.join(romp.lib.config.root_dir, 'result_images', '{}_on_gpu{}_val'.format(self.tab, self.GPUS))
         os.makedirs(self.result_img_dir,exist_ok=True)
-        self.train_img_dir = os.path.join(config.root_dir, 'result_image_train', '{}_on_gpu{}_val'.format(self.tab, self.GPUS))
+        self.train_img_dir = os.path.join(romp.lib.config.root_dir, 'result_image_train', '{}_on_gpu{}_val'.format(self.tab, self.GPUS))
         os.makedirs(self.train_img_dir,exist_ok=True)
-        self.model_save_dir = os.path.join(config.root_dir, 'checkpoints', '{}_on_gpu{}_val'.format(self.tab, self.GPUS))
+        self.model_save_dir = os.path.join(romp.lib.config.root_dir, 'checkpoints', '{}_on_gpu{}_val'.format(self.tab, self.GPUS))
         os.makedirs(self.model_save_dir,exist_ok=True)
 
     def _init_params(self):
@@ -102,10 +102,10 @@ class Base(object):
               self.chunk_sizes.append(slave_chunk_size)
             logging.info('training chunk_sizes:{}'.format(self.chunk_sizes))
 
-        self.lr_hip_idx = np.array([constants.SMPL_ALL_54['L_Hip'], constants.SMPL_ALL_54['R_Hip']])
-        self.lr_hip_idx_lsp = np.array([constants.LSP_14['L_Hip'], constants.LSP_14['R_Hip']])
+        self.lr_hip_idx = np.array([romp.lib.constants.SMPL_ALL_54['L_Hip'], romp.lib.constants.SMPL_ALL_54['R_Hip']])
+        self.lr_hip_idx_lsp = np.array([romp.lib.constants.LSP_14['L_Hip'], romp.lib.constants.LSP_14['R_Hip']])
         self.kintree_parents = np.array([-1, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 9, 9, 12, 13, 14, 16,17, 18, 19, 20, 21],dtype=np.int)
-        self.All54_to_LSP14_mapper = constants.joint_mapping(constants.SMPL_ALL_54, constants.LSP_14)
+        self.All54_to_LSP14_mapper = romp.lib.constants.joint_mapping(romp.lib.constants.SMPL_ALL_54, romp.lib.constants.LSP_14)
 
     def network_forward(self, model, meta_data, cfg_dict):
         ds_org, imgpath_org = get_remove_keys(meta_data,keys=['data_set','imgpath'])

@@ -1,13 +1,13 @@
-import sys 
+import sys
 whether_set_yml = ['configs_yml' in input_arg for input_arg in sys.argv]
 if sum(whether_set_yml)==0:
     default_webcam_configs_yml = "--configs_yml=configs/image.yml"
     print('No configs_yml is set, set it to the default {}'.format(default_webcam_configs_yml))
     sys.argv.append(default_webcam_configs_yml)
-from .base_predictor import *
-import constants
+from romp.predict.base_predictor import *
+import romp.lib.constants
 import glob
-from utils.util import collect_image_list
+from romp.lib.utils.util import collect_image_list
 
 class Image_processor(Predictor):
     def __init__(self, **kwargs):
@@ -22,11 +22,11 @@ class Image_processor(Predictor):
         counter = Time_counter(thresh=1)
 
         if self.show_mesh_stand_on_image:
-            from visualization.vedo_visualizer import Vedo_visualizer
+            from romp.lib.visualization.vedo_visualizer import Vedo_visualizer
             visualizer = Vedo_visualizer()
             stand_on_imgs_frames = []
 
-        file_list = collect_image_list(image_folder=image_folder, collect_subdirs=self.collect_subdirs, img_exts=constants.img_exts)
+        file_list = collect_image_list(image_folder=image_folder, collect_subdirs=self.collect_subdirs, img_exts=romp.lib.constants.img_exts)
         internet_loader = self._create_single_data_loader(dataset='internet', train_flag=False, file_list=file_list, shuffle=False)
         counter.start()
         results_all = {}
